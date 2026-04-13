@@ -28,6 +28,7 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    mockMode: '',
     mongoUri: '',
     googleClientId: '',
     googleClientSecret: '',
@@ -37,6 +38,7 @@ export default defineNuxtConfig({
     sessionSecret: '',
     public: {
       appName: 'Dashboard',
+      mockMode: '',
     },
   },
 

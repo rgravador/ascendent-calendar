@@ -1,7 +1,7 @@
 ---
 title: Personal Dashboard — Calendar, Alarms, Todos, Notes
 type: feat
-status: active
+status: completed
 date: 2026-04-13
 origin: docs/brainstorms/2026-04-13-personal-dashboard-requirements.md
 ---

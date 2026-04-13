@@ -10,10 +10,28 @@ A single-page Nuxt 3 dashboard that shows today's Google Calendar events with pr
 - Google Calendar API v3 (read-only)
 - AWS Amplify Hosting
 
-## Local development
+## Quick start (mock mode — no external services)
 
 ```bash
 cp .env.example .env
+npm install
+npm run dev
+```
+
+Open http://localhost:3000. You'll land straight on the dashboard with:
+- A fake schedule of today's events (including one 3 min away so the alarm fires)
+- Seeded todos and notes
+- No login prompt, no Mongo, no Google OAuth
+
+Mock data lives in process memory and resets when you restart the dev server.
+
+To turn mock mode off, set `NUXT_MOCK_MODE=0` and `NUXT_PUBLIC_MOCK_MODE=0` (or remove those lines) and configure the real env vars below.
+
+## Local development with real services
+
+```bash
+cp .env.example .env
+# set NUXT_MOCK_MODE=0 and NUXT_PUBLIC_MOCK_MODE=0
 # fill in MONGO_URI, Google OAuth creds, DASHBOARD_PASSWORD, SETUP_SECRET, SESSION_SECRET
 
 npm install

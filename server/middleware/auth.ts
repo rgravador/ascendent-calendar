@@ -1,5 +1,6 @@
 import { getCookie, sendRedirect, createError } from 'h3'
 import { SESSION_COOKIE, verifySessionToken } from '~/server/utils/cookies'
+import { isMockMode } from '~/server/utils/mock-mode'
 
 /**
  * Routes that bypass the session check. `/setup*` is gated by SETUP_SECRET.
@@ -28,6 +29,7 @@ function isPublic(path: string): boolean {
 export default defineEventHandler(async (event) => {
   const path = event.path || event.node.req.url || '/'
   if (isPublic(path)) return
+  if (isMockMode()) return // mock mode bypasses auth entirely
 
   const config = useRuntimeConfig()
   const secret = config.sessionSecret

@@ -1,11 +1,19 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 definePageMeta({ layout: false })
+
+const config = useRuntimeConfig()
+const mockMode = String(config.public.mockMode ?? '').toLowerCase()
+const isMock = mockMode === '1' || mockMode === 'true' || mockMode === 'yes'
 
 const password = ref('')
 const error = ref<string | null>(null)
 const submitting = ref(false)
+
+onMounted(() => {
+  if (isMock) navigateTo('/')
+})
 
 async function submit() {
   submitting.value = true
@@ -28,6 +36,7 @@ async function submit() {
 <template>
   <main class="min-h-screen grid place-items-center px-6">
     <form
+      v-if="!isMock"
       class="w-full max-w-sm border-y border-rule py-12"
       @submit.prevent="submit"
     >
@@ -58,5 +67,7 @@ async function submit() {
         {{ submitting ? 'Verifying…' : 'Enter' }}
       </button>
     </form>
+
+    <p v-else class="text-mute italic">Mock mode active — redirecting…</p>
   </main>
 </template>

@@ -1,6 +1,8 @@
 import { google } from 'googleapis'
 import { buildAuthenticatedClient } from '~/server/utils/google-oauth'
 import { getSettings } from '~/server/repositories/settings'
+import { isMockMode } from '~/server/utils/mock-mode'
+import { mockTodaysEvents } from '~/server/mock/store'
 
 export interface CalendarEventDTO {
   id: string
@@ -39,6 +41,8 @@ function endOfLocalDay(now: Date = new Date()): Date {
 }
 
 export async function fetchTodaysEvents(): Promise<CalendarEventDTO[]> {
+  if (isMockMode()) return mockTodaysEvents()
+
   const settings = await getSettings()
   if (!settings.googleRefreshToken) throw new CalendarNotConfiguredError()
 

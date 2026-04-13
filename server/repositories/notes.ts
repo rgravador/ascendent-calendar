@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { getDb } from '~/server/utils/mongo'
+import { isMockMode } from '~/server/utils/mock-mode'
+import { mockNotes } from '~/server/mock/store'
 import type { Note } from '~/server/types/models'
 
 const COLLECTION = 'notes'
@@ -31,6 +33,9 @@ function assertValidTitle(title: string) {
 }
 
 export async function listNotes(): Promise<Note[]> {
+  if (isMockMode()) {
+    return [...mockNotes.list()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+  }
   const db = await getDb()
   const docs = await db.collection<Note>(COLLECTION).find({}).toArray()
   return [...docs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
@@ -47,14 +52,15 @@ export async function createNote(input: CreateNoteInput): Promise<Note> {
     createdAt: now,
     updatedAt: now,
   }
+  if (isMockMode()) return mockNotes.create(note)
   const db = await getDb()
   await db.collection<Note>(COLLECTION).insertOne(note)
   return note
 }
 
 export async function updateNote(id: string, patch: UpdateNoteInput): Promise<Note | null> {
-  const safePatch: Record<string, unknown> = {}
-  const unset: Record<string, ''> = {}
+  const safePatch: Partial<Note> = {}
+  let unsetTitle = false
 
   if (patch.body !== undefined) {
     assertValidBody(patch.body)
@@ -62,7 +68,7 @@ export async function updateNote(id: string, patch: UpdateNoteInput): Promise<No
   }
   if (patch.title !== undefined) {
     if (patch.title === null || patch.title === '') {
-      unset.title = ''
+      unsetTitle = true
     } else {
       assertValidTitle(patch.title)
       safePatch.title = patch.title
@@ -70,9 +76,11 @@ export async function updateNote(id: string, patch: UpdateNoteInput): Promise<No
   }
   safePatch.updatedAt = new Date().toISOString()
 
+  if (isMockMode()) return mockNotes.update(id, safePatch, unsetTitle)
+
   const db = await getDb()
   const update: Record<string, unknown> = { $set: safePatch }
-  if (Object.keys(unset).length > 0) update.$unset = unset
+  if (unsetTitle) update.$unset = { title: '' }
   const result = await db.collection<Note>(COLLECTION).findOneAndUpdate(
     { _id: id },
     update,
@@ -82,6 +90,7 @@ export async function updateNote(id: string, patch: UpdateNoteInput): Promise<No
 }
 
 export async function deleteNote(id: string): Promise<boolean> {
+  if (isMockMode()) return mockNotes.remove(id)
   const db = await getDb()
   const result = await db.collection<Note>(COLLECTION).deleteOne({ _id: id })
   return result.deletedCount === 1

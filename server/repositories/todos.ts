@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { getDb } from '~/server/utils/mongo'
+import { isMockMode } from '~/server/utils/mock-mode'
+import { mockTodos } from '~/server/mock/store'
 import { PRIORITIES, type Priority, type Todo } from '~/server/types/models'
 
 const COLLECTION = 'todos'
@@ -40,6 +42,7 @@ function assertValidDueDate(value: string) {
 }
 
 export async function listTodos(): Promise<Todo[]> {
+  if (isMockMode()) return [...mockTodos.list()].sort(compareTodos)
   const db = await getDb()
   const docs = await db.collection<Todo>(COLLECTION).find({}).toArray()
   return [...docs].sort(compareTodos)
@@ -59,14 +62,15 @@ export async function createTodo(input: CreateTodoInput): Promise<Todo> {
     createdAt: now,
     updatedAt: now,
   }
+  if (isMockMode()) return mockTodos.create(todo)
   const db = await getDb()
   await db.collection<Todo>(COLLECTION).insertOne(todo)
   return todo
 }
 
 export async function updateTodo(id: string, patch: UpdateTodoInput): Promise<Todo | null> {
-  const safePatch: Record<string, unknown> = {}
-  const unset: Record<string, ''> = {}
+  const safePatch: Partial<Todo> = {}
+  let unsetDueDate = false
 
   if (patch.text !== undefined) {
     assertValidText(patch.text)
@@ -79,7 +83,7 @@ export async function updateTodo(id: string, patch: UpdateTodoInput): Promise<To
   if (patch.done !== undefined) safePatch.done = Boolean(patch.done)
   if (patch.dueDate !== undefined) {
     if (patch.dueDate === null || patch.dueDate === '') {
-      unset.dueDate = ''
+      unsetDueDate = true
     } else {
       assertValidDueDate(patch.dueDate)
       safePatch.dueDate = patch.dueDate
@@ -87,9 +91,11 @@ export async function updateTodo(id: string, patch: UpdateTodoInput): Promise<To
   }
   safePatch.updatedAt = new Date().toISOString()
 
+  if (isMockMode()) return mockTodos.update(id, safePatch, unsetDueDate)
+
   const db = await getDb()
   const update: Record<string, unknown> = { $set: safePatch }
-  if (Object.keys(unset).length > 0) update.$unset = unset
+  if (unsetDueDate) update.$unset = { dueDate: '' }
   const result = await db.collection<Todo>(COLLECTION).findOneAndUpdate(
     { _id: id },
     update,
@@ -99,6 +105,7 @@ export async function updateTodo(id: string, patch: UpdateTodoInput): Promise<To
 }
 
 export async function deleteTodo(id: string): Promise<boolean> {
+  if (isMockMode()) return mockTodos.remove(id)
   const db = await getDb()
   const result = await db.collection<Todo>(COLLECTION).deleteOne({ _id: id })
   return result.deletedCount === 1
