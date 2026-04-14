@@ -6,6 +6,11 @@ import { formatClock, formatDuration, isCurrent, diffMinutes } from '~/utils/tim
 const props = defineProps<{
   event: CalendarEventDTO
   now: Date
+  ignored: boolean
+}>()
+
+const emit = defineEmits<{
+  toggleIgnore: [eventId: string]
 }>()
 
 const clock = computed(() => formatClock(props.event.start))
@@ -46,7 +51,7 @@ const arrowClass = computed(() => {
 <template>
   <li
     class="py-3 flex gap-3 items-start group transition"
-    :class="{ 'opacity-40': past }"
+    :class="{ 'opacity-40': past, 'opacity-30': ignored }"
   >
     <!-- time rail -->
     <div class="flex flex-col items-end min-w-[3.5rem] pt-0.5">
@@ -87,6 +92,14 @@ const arrowClass = computed(() => {
       <div v-if="event.location" class="text-[0.68rem] text-mute mt-1 truncate font-mono uppercase tracking-wider">
         @ {{ event.location }}
       </div>
+      <button
+        class="mt-2.5 text-[0.62rem] font-mono uppercase tracking-wider transition-opacity"
+        :class="ignored ? 'text-warn opacity-100' : 'text-mute hover:text-warn opacity-0 group-hover:opacity-100'"
+        :title="ignored ? 'Unignore — resume alarms' : 'Ignore — silence alarms'"
+        @click="emit('toggleIgnore', event.id)"
+      >
+        {{ ignored ? '⊘ IGNORED' : '⊘ IGNORE' }}
+      </button>
     </div>
   </li>
 </template>

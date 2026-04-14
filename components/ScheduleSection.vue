@@ -8,6 +8,11 @@ const props = defineProps<{
   loading: boolean
   error: ScheduleError | null
   now: Date
+  ignoredIds: Set<string>
+}>()
+
+const emit = defineEmits<{
+  toggleIgnore: [eventId: string]
 }>()
 
 const hasEvents = computed(() => props.events.length > 0)
@@ -53,6 +58,8 @@ const hasEvents = computed(() => props.events.length > 0)
         :key="e.id"
         :event="e"
         :now="now"
+        :ignored="ignoredIds.has(e.id)"
+        @toggle-ignore="emit('toggleIgnore', $event)"
       />
     </ol>
   </div>

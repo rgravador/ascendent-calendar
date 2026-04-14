@@ -4,12 +4,14 @@ import { computed } from 'vue'
 const now = useNow()
 const schedule = useSchedule()
 const { settings, setOffset } = useSettings()
+const { ignoredIds, toggle: toggleIgnore } = useIgnoredEvents()
 
 const offsetRef = computed(() => settings.value.alarmOffsetMinutes)
 
 const alarms = useAlarms({
   events: schedule.events,
   offsetMinutes: offsetRef,
+  ignoredIds,
 })
 
 const dateLine = computed(() =>
@@ -126,6 +128,8 @@ async function logout() {
           :loading="schedule.loading.value"
           :error="schedule.error.value"
           :now="now"
+          :ignored-ids="ignoredIds"
+          @toggle-ignore="toggleIgnore"
         />
       </div>
       <div class="card p-5 min-w-0">
