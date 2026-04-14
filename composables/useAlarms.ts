@@ -37,6 +37,7 @@ export interface AlarmsApi {
 interface Options {
   events: Ref<CalendarEventDTO[]>
   offsetMinutes: Ref<number>
+  ignoredIds: Ref<Set<string>>
   alarmSound: Ref<AlarmSound>
   alarmVolume: Ref<number> // 0–100
   alarmRingDuration: Ref<number> // minutes (1–10)
@@ -124,7 +125,7 @@ function playSynthSound(ctx: AudioContext, sound: AlarmSound, volume: number) {
 
 const RING_INTERVAL_MS = 3_000 // replay sound every 3 seconds
 
-export function useAlarms({ events, offsetMinutes, alarmSound, alarmVolume, alarmRingDuration }: Options): AlarmsApi {
+export function useAlarms({ events, offsetMinutes, ignoredIds, alarmSound, alarmVolume, alarmRingDuration }: Options): AlarmsApi {
   const permission = ref<PermissionState>('default')
   const soundUnlocked = ref(false)
   const ringing = ref<RingingAlarm | null>(null)

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 const now = useNow()
 const schedule = useSchedule()
@@ -10,9 +10,22 @@ const soundRef = computed(() => settings.value.alarmSound)
 const volumeRef = computed(() => settings.value.alarmVolume)
 const ringDurationRef = computed(() => settings.value.alarmRingDuration)
 
+const ignoredIds = ref(new Set<string>())
+
+function toggleIgnore(eventId: string) {
+  const next = new Set(ignoredIds.value)
+  if (next.has(eventId)) {
+    next.delete(eventId)
+  } else {
+    next.add(eventId)
+  }
+  ignoredIds.value = next
+}
+
 const alarms = useAlarms({
   events: schedule.events,
   offsetMinutes: offsetRef,
+  ignoredIds,
   alarmSound: soundRef,
   alarmVolume: volumeRef,
   alarmRingDuration: ringDurationRef,
