@@ -27,11 +27,11 @@ const state = computed(() => {
 })
 
 const relative = computed(() => {
-  if (current.value) return 'NOW'
-  if (past.value) return 'DONE'
+  if (current.value) return 'Now'
+  if (past.value) return 'Done'
   const m = minsToStart.value
-  if (m < 60) return `+${m}m`
-  return `+${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
+  if (m < 60) return `in ${m}m`
+  return `in ${Math.floor(m / 60)}h ${String(m % 60).padStart(2, '0')}m`
 })
 
 const relativeClass = computed(() => {
@@ -39,12 +39,6 @@ const relativeClass = computed(() => {
   if (past.value) return ''
   if (state.value === 'imminent') return 'tag-warn'
   return 'tag-info'
-})
-
-const arrowClass = computed(() => {
-  if (past.value) return 'arrow-flat'
-  if (current.value) return 'arrow-up'
-  return 'arrow-up'
 })
 </script>
 
@@ -56,8 +50,8 @@ const arrowClass = computed(() => {
     <!-- time rail -->
     <div class="flex flex-col items-end min-w-[3.5rem] pt-0.5">
       <span
-        class="num text-sm leading-none"
-        :class="current ? 'text-bull' : 'text-ink'"
+        class="num text-sm leading-none font-medium"
+        :class="current ? 'text-success' : 'text-ink'"
       >{{ clock }}</span>
       <span class="text-[0.65rem] text-mute mt-1 num">{{ duration }}</span>
     </div>
@@ -66,10 +60,10 @@ const arrowClass = computed(() => {
     <div
       class="w-[3px] self-stretch rounded-full"
       :class="{
-        'bg-bull': current,
+        'bg-success': current,
         'bg-warn': state === 'imminent',
         'bg-info': state === 'queued',
-        'bg-rule': past,
+        'bg-rule-strong': past,
       }"
     />
 
@@ -84,21 +78,20 @@ const arrowClass = computed(() => {
           class="text-sm font-medium leading-snug hover:text-accent transition line-clamp-2"
         >{{ event.title }}</a>
         <span v-else class="text-sm font-medium leading-snug line-clamp-2">{{ event.title }}</span>
-        <span class="tag shrink-0 num" :class="relativeClass">
-          <span :class="arrowClass" />
+        <span class="tag shrink-0" :class="relativeClass">
           {{ relative }}
         </span>
       </div>
-      <div v-if="event.location" class="text-[0.68rem] text-mute mt-1 truncate font-mono uppercase tracking-wider">
-        @ {{ event.location }}
+      <div v-if="event.location" class="text-xs text-mute mt-1 truncate">
+        {{ event.location }}
       </div>
       <button
-        class="mt-2.5 text-[0.62rem] font-mono uppercase tracking-wider transition-opacity"
+        class="mt-2 text-xs transition-opacity"
         :class="ignored ? 'text-warn opacity-100' : 'text-mute hover:text-warn opacity-0 group-hover:opacity-100'"
-        :title="ignored ? 'Unignore — resume alarms' : 'Ignore — silence alarms'"
+        :title="ignored ? 'Resume alarms' : 'Silence alarms'"
         @click="emit('toggleIgnore', event.id)"
       >
-        {{ ignored ? '⊘ IGNORED' : '⊘ IGNORE' }}
+        {{ ignored ? 'Ignored' : 'Ignore' }}
       </button>
     </div>
   </li>

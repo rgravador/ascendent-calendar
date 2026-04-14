@@ -23,21 +23,18 @@ async function onRemove(id: string) {
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-2">
-        <span class="kicker text-accent">02</span>
-        <h2 class="text-sm text-ink font-medium tracking-wide">Todo</h2>
-      </div>
+      <h2 class="font-display text-base text-ink">Todos</h2>
       <div class="flex gap-1.5">
-        <span v-if="highCount > 0" class="tag tag-bear num">HI × {{ highCount }}</span>
-        <span class="tag num">{{ String(active.length).padStart(2, '0') }}</span>
+        <span v-if="highCount > 0" class="tag tag-bear">{{ highCount }} urgent</span>
+        <span class="tag">{{ active.length }}</span>
       </div>
     </div>
 
     <TodoAddForm @add="onAdd" />
 
-    <div v-if="loading" class="text-mute text-xs font-mono py-4">Loading…</div>
+    <div v-if="loading" class="text-mute text-sm py-4">Loading...</div>
 
-    <div v-else-if="active.length === 0 && done.length === 0" class="rounded-md bg-surface-soft border border-rule p-6 text-center">
+    <div v-else-if="active.length === 0 && done.length === 0" class="rounded-xl bg-surface-soft border border-rule p-6 text-center">
       <p class="text-sm text-ink">Nothing to do</p>
       <p class="text-xs text-mute mt-1">Your list is empty.</p>
     </div>
@@ -54,11 +51,11 @@ async function onRemove(id: string) {
 
     <div v-if="done.length > 0" class="mt-5 pt-3 border-t border-rule">
       <button
-        class="kicker hover:text-ink transition flex items-center gap-1.5"
+        class="section-label hover:text-ink transition flex items-center gap-1.5"
         @click="showDone = !showDone"
       >
         <span>{{ showDone ? '▾' : '▸' }}</span>
-        <span>DONE · {{ done.length }}</span>
+        <span>Completed ({{ done.length }})</span>
       </button>
       <ul v-if="showDone" class="mt-2 divide-y divide-rule">
         <TodoItem

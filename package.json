@@ -11,8 +11,10 @@
     "typecheck": "nuxt typecheck"
   },
   "dependencies": {
+    "@fontsource/dm-sans": "^5.2.8",
     "@fontsource/fraunces": "5.1.0",
     "@fontsource/inter-tight": "5.1.0",
+    "@fontsource/outfit": "^5.2.8",
     "google-auth-library": "9.14.2",
     "googleapis": "144.0.0",
     "mongodb": "6.10.0",

@@ -20,17 +20,22 @@ function signInWithGoogle() {
   <main class="min-h-screen grid place-items-center px-6">
     <div
       v-if="!isMock"
-      class="w-full max-w-sm border-y border-rule py-12"
+      class="w-full max-w-sm text-center"
     >
-      <div class="text-center">
-        <div class="kicker">Welcome</div>
-        <h1 class="font-display text-5xl leading-none mt-2">The Daily</h1>
-        <p class="text-mute italic mt-3">Sign in to access your calendar.</p>
+      <div class="w-14 h-14 rounded-2xl bg-accent-soft flex items-center justify-center mx-auto mb-6">
+        <svg class="w-7 h-7 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+          <line x1="16" y1="2" x2="16" y2="6" />
+          <line x1="8" y1="2" x2="8" y2="6" />
+          <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
       </div>
+      <h1 class="font-display text-4xl text-ink">My Day</h1>
+      <p class="text-mute mt-2 text-sm">Sign in to access your calendar, todos & notes.</p>
 
       <button
         type="button"
-        class="mt-10 w-full py-3 border border-ink font-display text-lg tracking-wide hover:bg-ink hover:text-paper transition flex items-center justify-center gap-3"
+        class="mt-8 w-full btn btn-primary py-3 text-sm rounded-xl flex items-center justify-center gap-3"
         @click="signInWithGoogle"
       >
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none">
@@ -43,6 +48,6 @@ function signInWithGoogle() {
       </button>
     </div>
 
-    <p v-else class="text-mute italic">Mock mode active — redirecting…</p>
+    <p v-else class="text-mute">Mock mode active — redirecting...</p>
   </main>
 </template>

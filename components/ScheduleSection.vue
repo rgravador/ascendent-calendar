@@ -51,12 +51,9 @@ const noEventsSubtext = computed(() =>
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-2">
-        <span class="kicker text-accent">01</span>
-        <h2 class="text-sm text-ink font-medium tracking-wide">Schedule</h2>
-      </div>
-      <span v-if="events.length > 0" class="tag tag-info num">
-        {{ String(events.length).padStart(2, '0') }}
+      <h2 class="font-display text-base text-ink">Schedule</h2>
+      <span v-if="events.length > 0" class="tag tag-info">
+        {{ events.length }} {{ events.length === 1 ? 'event' : 'events' }}
       </span>
     </div>
 
@@ -75,28 +72,28 @@ const noEventsSubtext = computed(() =>
         class="tag tag-accent cursor-pointer hover:brightness-125 transition-all"
         @click="goToToday"
       >
-        ↩ Today
+        Back to today
       </button>
     </div>
 
-    <div v-if="error?.kind === 'not_connected'" class="rounded-md bg-surface-soft border border-rule p-4 text-center">
+    <div v-if="error?.kind === 'not_connected'" class="rounded-xl bg-surface-soft border border-rule p-4 text-center">
       <p class="text-sm text-ink">Calendar not connected</p>
       <p class="text-xs text-mute mt-1">Sign out and sign in again to reconnect.</p>
     </div>
 
-    <div v-else-if="error?.kind === 'auth_failed'" class="rounded-md bg-bear-soft border border-bear/30 p-4 text-center">
-      <p class="text-sm text-bear">Authorization expired</p>
+    <div v-else-if="error?.kind === 'auth_failed'" class="rounded-xl bg-danger-soft border border-danger/20 p-4 text-center">
+      <p class="text-sm text-danger">Authorization expired</p>
       <p class="text-xs text-mute mt-1">Sign out and sign in again to refresh.</p>
     </div>
 
-    <div v-else-if="error?.kind === 'unknown'" class="rounded-md bg-warn-soft border border-warn/30 p-4">
+    <div v-else-if="error?.kind === 'unknown'" class="rounded-xl bg-warn-soft border border-warn/20 p-4">
       <p class="text-sm text-warn">Calendar temporarily unavailable</p>
       <p class="text-xs text-mute mt-1">{{ error.message }} — retrying.</p>
     </div>
 
-    <div v-else-if="loading" class="text-mute text-xs font-mono py-4">Loading…</div>
+    <div v-else-if="loading" class="text-mute text-sm py-4">Loading...</div>
 
-    <div v-else-if="!hasEvents" class="rounded-md bg-surface-soft border border-rule p-6 text-center">
+    <div v-else-if="!hasEvents" class="rounded-xl bg-surface-soft border border-rule p-6 text-center">
       <p class="text-sm text-ink">{{ noEventsMessage }}</p>
       <p class="text-xs text-mute mt-1">{{ noEventsSubtext }}</p>
     </div>
@@ -123,13 +120,13 @@ const noEventsSubtext = computed(() =>
   padding: 0.35rem 0.6rem;
   font-size: 0.75rem;
   line-height: 1;
-  border-radius: 0.375rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   color-scheme: dark;
 }
 
 .date-picker::-webkit-calendar-picker-indicator {
-  filter: invert(0.6) sepia(1) saturate(3) hue-rotate(110deg);
+  filter: invert(0.7) sepia(1) saturate(2) hue-rotate(200deg);
   cursor: pointer;
   opacity: 0.6;
   transition: opacity 160ms ease;

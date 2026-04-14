@@ -11,8 +11,8 @@ export default <Partial<Config>>{
   theme: {
     extend: {
       fontFamily: {
-        display: ['Fraunces', 'ui-serif', 'Georgia', 'serif'],
-        sans: ['"Inter Tight"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Outfit', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['"DM Sans"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       colors: {
         paper: 'var(--paper)',
@@ -26,13 +26,16 @@ export default <Partial<Config>>{
         'rule-strong': 'var(--rule-strong)',
         accent: 'var(--accent)',
         'accent-soft': 'var(--accent-soft)',
-        bull: 'var(--bull)',
-        bear: 'var(--bear)',
+        bull: 'var(--success)',
+        bear: 'var(--danger)',
         warn: 'var(--warn)',
         info: 'var(--info)',
+        success: 'var(--success)',
+        danger: 'var(--danger)',
       },
-      letterSpacing: {
-        kicker: '0.18em',
+      borderRadius: {
+        'xl': '1rem',
+        '2xl': '1.25rem',
       },
     },
   },

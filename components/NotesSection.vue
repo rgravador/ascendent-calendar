@@ -33,16 +33,13 @@ async function onRemove(id: string) {
 <template>
   <div>
     <div class="flex items-center justify-between mb-4">
-      <div class="flex items-center gap-2">
-        <span class="kicker text-accent">03</span>
-        <h2 class="text-sm text-ink font-medium tracking-wide">Notes</h2>
-      </div>
-      <span v-if="notes.length > 0" class="tag num">
-        {{ String(notes.length).padStart(2, '0') }}
+      <h2 class="font-display text-base text-ink">Notes</h2>
+      <span v-if="notes.length > 0" class="tag">
+        {{ notes.length }}
       </span>
     </div>
 
-    <form class="rounded-md bg-surface-soft p-3 mb-4 border border-rule" @submit.prevent="onCreate">
+    <form class="rounded-xl bg-surface-soft p-3 mb-4 border border-rule" @submit.prevent="onCreate">
       <input
         v-if="expanded"
         v-model="newTitle"
@@ -54,12 +51,12 @@ async function onRemove(id: string) {
         v-model="newBody"
         :rows="expanded ? 3 : 2"
         maxlength="2000"
-        placeholder="A thought, a quote, a reminder…"
-        class="field resize-none text-sm font-mono"
+        placeholder="Write a note..."
+        class="field resize-none text-sm"
         @focus="expanded = true"
       />
       <div v-if="expanded" class="flex items-center justify-between mt-2">
-        <span class="text-[0.68rem] text-mute num">{{ newBody.length }}/2000</span>
+        <span class="text-xs text-mute tabular-nums">{{ newBody.length }}/2000</span>
         <div class="flex gap-2">
           <button
             type="button"
@@ -79,9 +76,9 @@ async function onRemove(id: string) {
       </div>
     </form>
 
-    <div v-if="loading" class="text-mute text-xs font-mono py-4">Loading…</div>
+    <div v-if="loading" class="text-mute text-sm py-4">Loading...</div>
 
-    <div v-else-if="notes.length === 0" class="rounded-md bg-surface-soft border border-rule p-6 text-center">
+    <div v-else-if="notes.length === 0" class="rounded-xl bg-surface-soft border border-rule p-6 text-center">
       <p class="text-sm text-ink">No notes yet</p>
       <p class="text-xs text-mute mt-1">Start typing above.</p>
     </div>

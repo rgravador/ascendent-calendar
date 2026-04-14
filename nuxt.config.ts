@@ -7,12 +7,14 @@ export default defineNuxtConfig({
   modules: ['@nuxtjs/tailwindcss'],
 
   css: [
-    '@fontsource/fraunces/400.css',
-    '@fontsource/fraunces/500.css',
-    '@fontsource/fraunces/600-italic.css',
-    '@fontsource/inter-tight/400.css',
-    '@fontsource/inter-tight/500.css',
-    '@fontsource/inter-tight/600.css',
+    '@fontsource/outfit/400.css',
+    '@fontsource/outfit/500.css',
+    '@fontsource/outfit/600.css',
+    '@fontsource/outfit/700.css',
+    '@fontsource/dm-sans/400.css',
+    '@fontsource/dm-sans/500.css',
+    '@fontsource/dm-sans/600.css',
+    '@fontsource/dm-sans/700.css',
     '~/assets/css/main.css',
   ],
 
@@ -22,7 +24,7 @@ export default defineNuxtConfig({
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-        { name: 'theme-color', content: '#f6f2ea' },
+        { name: 'theme-color', content: '#111116' },
       ],
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },

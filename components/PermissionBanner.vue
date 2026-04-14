@@ -26,7 +26,7 @@ const message = computed(() => {
 <template>
   <div
     v-if="visible"
-    class="mt-5 rounded-xl bg-accent-soft border border-accent/20 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
+    class="mt-5 rounded-xl bg-accent-soft border border-accent/15 px-4 py-3 flex flex-wrap items-center justify-between gap-3"
   >
     <div class="text-sm text-ink-soft flex items-center gap-2">
       <span class="dot text-accent" />

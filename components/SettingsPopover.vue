@@ -84,16 +84,19 @@ const DURATION_PRESETS = [1, 2, 3, 5, 10]
       class="btn btn-ghost text-xs"
       @click="open = !open"
     >
-      <span class="dot text-accent" />
-      <span>Alarm · {{ offsetMinutes }}m before</span>
+      <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z" />
+      </svg>
+      <span>Alarm {{ offsetMinutes }}m</span>
     </button>
 
     <div
       v-if="open"
       class="absolute right-0 mt-2 w-72 card p-4 z-20"
     >
-      <div class="kicker">Alarm lead time</div>
-      <p class="text-xs text-mute mt-1">How long before each event to alert you.</p>
+      <h3 class="font-display text-sm text-ink">Alarm settings</h3>
+      <p class="text-xs text-mute mt-1">Alert before each event starts.</p>
 
       <div class="flex gap-1.5 flex-wrap mt-3">
         <button
@@ -109,7 +112,7 @@ const DURATION_PRESETS = [1, 2, 3, 5, 10]
       </div>
 
       <label class="block mt-4">
-        <span class="text-xs text-mute">Custom</span>
+        <span class="text-xs text-mute">Custom (minutes)</span>
         <input
           v-model.number="draftOffset"
           type="number"
@@ -121,8 +124,8 @@ const DURATION_PRESETS = [1, 2, 3, 5, 10]
 
       <!-- Alarm sound -->
       <div class="mt-5">
-        <div class="kicker">Alarm sound</div>
-        <p class="text-xs text-mute mt-1">Tap to preview, then save.</p>
+        <h3 class="font-display text-sm text-ink">Sound</h3>
+        <p class="text-xs text-mute mt-1">Tap to preview.</p>
 
         <div class="flex gap-1.5 flex-wrap mt-3">
           <button
@@ -141,8 +144,8 @@ const DURATION_PRESETS = [1, 2, 3, 5, 10]
       <!-- Volume -->
       <div class="mt-5">
         <div class="flex items-center justify-between">
-          <div class="kicker">Volume</div>
-          <span class="num text-xs tabular-nums text-mute">{{ draftVolume }}%</span>
+          <h3 class="font-display text-sm text-ink">Volume</h3>
+          <span class="text-xs tabular-nums text-mute">{{ draftVolume }}%</span>
         </div>
         <input
           v-model.number="draftVolume"
@@ -156,8 +159,8 @@ const DURATION_PRESETS = [1, 2, 3, 5, 10]
 
       <!-- Ring duration -->
       <div class="mt-5">
-        <div class="kicker">Ring duration</div>
-        <p class="text-xs text-mute mt-1">How long the alarm rings before auto-stopping.</p>
+        <h3 class="font-display text-sm text-ink">Ring duration</h3>
+        <p class="text-xs text-mute mt-1">Auto-stops after this time.</p>
 
         <div class="flex gap-1.5 flex-wrap mt-3">
           <button
@@ -180,7 +183,7 @@ const DURATION_PRESETS = [1, 2, 3, 5, 10]
           :disabled="saving"
           @click="save"
         >
-          {{ saving ? 'Saving…' : 'Save' }}
+          {{ saving ? 'Saving...' : 'Save' }}
         </button>
       </div>
     </div>
