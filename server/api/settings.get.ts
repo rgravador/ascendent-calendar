@@ -5,6 +5,9 @@ export default defineEventHandler(async () => {
   // Never expose the refresh token to the client.
   return {
     alarmOffsetMinutes: s.alarmOffsetMinutes,
+    alarmSound: s.alarmSound,
+    alarmVolume: s.alarmVolume,
+    alarmRingDuration: s.alarmRingDuration,
     calendarConnected: Boolean(s.googleRefreshToken),
   }
 })

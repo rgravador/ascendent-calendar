@@ -1,7 +1,7 @@
 import { getDb } from '~/server/utils/mongo'
 import { isMockMode } from '~/server/utils/mock-mode'
 import { mockSettings } from '~/server/mock/store'
-import { DEFAULT_SETTINGS, type Settings } from '~/server/types/models'
+import { ALARM_SOUNDS, DEFAULT_SETTINGS, type Settings } from '~/server/types/models'
 
 const COLLECTION = 'settings'
 const SINGLETON_ID = 'singleton' as const
@@ -20,6 +20,15 @@ export async function updateSettings(patch: Partial<Omit<Settings, '_id'>>): Pro
   const safePatch: Partial<Omit<Settings, '_id'>> = {}
   if (typeof patch.alarmOffsetMinutes === 'number' && Number.isFinite(patch.alarmOffsetMinutes)) {
     safePatch.alarmOffsetMinutes = Math.max(0, Math.floor(patch.alarmOffsetMinutes))
+  }
+  if (typeof patch.alarmSound === 'string' && ALARM_SOUNDS.includes(patch.alarmSound)) {
+    safePatch.alarmSound = patch.alarmSound
+  }
+  if (typeof patch.alarmVolume === 'number' && Number.isFinite(patch.alarmVolume)) {
+    safePatch.alarmVolume = Math.max(0, Math.min(100, Math.round(patch.alarmVolume)))
+  }
+  if (typeof patch.alarmRingDuration === 'number' && Number.isFinite(patch.alarmRingDuration)) {
+    safePatch.alarmRingDuration = Math.max(1, Math.min(10, Math.round(patch.alarmRingDuration)))
   }
   if (typeof patch.googleRefreshToken === 'string') {
     safePatch.googleRefreshToken = patch.googleRefreshToken

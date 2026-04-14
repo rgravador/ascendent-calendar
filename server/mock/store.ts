@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import type { Note, Settings, Todo } from '~/server/types/models'
+import { ALARM_SOUNDS, type Note, type Settings, type Todo } from '~/server/types/models'
 import type { CalendarEventDTO } from '~/server/services/calendar'
 
 /**
@@ -27,6 +27,9 @@ function todayAt(hour: number, minute: number = 0): Date {
 const settingsState: Settings = {
   _id: 'singleton',
   alarmOffsetMinutes: 5,
+  alarmSound: 'chime',
+  alarmVolume: 70,
+  alarmRingDuration: 2,
   googleRefreshToken: 'mock-refresh-token',
   googleTokenUpdatedAt: now(),
 }
@@ -38,6 +41,15 @@ export const mockSettings = {
   patch(patch: Partial<Omit<Settings, '_id'>>): Settings {
     if (typeof patch.alarmOffsetMinutes === 'number' && Number.isFinite(patch.alarmOffsetMinutes)) {
       settingsState.alarmOffsetMinutes = Math.max(0, Math.floor(patch.alarmOffsetMinutes))
+    }
+    if (typeof patch.alarmSound === 'string' && ALARM_SOUNDS.includes(patch.alarmSound)) {
+      settingsState.alarmSound = patch.alarmSound
+    }
+    if (typeof patch.alarmVolume === 'number' && Number.isFinite(patch.alarmVolume)) {
+      settingsState.alarmVolume = Math.max(0, Math.min(100, Math.round(patch.alarmVolume)))
+    }
+    if (typeof patch.alarmRingDuration === 'number' && Number.isFinite(patch.alarmRingDuration)) {
+      settingsState.alarmRingDuration = Math.max(1, Math.min(10, Math.round(patch.alarmRingDuration)))
     }
     if (typeof patch.googleRefreshToken === 'string') {
       settingsState.googleRefreshToken = patch.googleRefreshToken

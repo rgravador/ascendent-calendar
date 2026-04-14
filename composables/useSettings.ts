@@ -1,11 +1,15 @@
 import { ref, onMounted } from 'vue'
+import type { AlarmSound } from '~/server/types/models'
 
 interface ClientSettings {
   alarmOffsetMinutes: number
+  alarmSound: AlarmSound
+  alarmVolume: number
+  alarmRingDuration: number
   calendarConnected: boolean
 }
 
-const DEFAULTS: ClientSettings = { alarmOffsetMinutes: 5, calendarConnected: false }
+const DEFAULTS: ClientSettings = { alarmOffsetMinutes: 5, alarmSound: 'chime', alarmVolume: 70, alarmRingDuration: 2, calendarConnected: false }
 
 export function useSettings() {
   const settings = ref<ClientSettings>({ ...DEFAULTS })
@@ -21,15 +25,31 @@ export function useSettings() {
     }
   }
 
-  async function setOffset(minutes: number) {
+  async function patch(body: Partial<Pick<ClientSettings, 'alarmOffsetMinutes' | 'alarmSound' | 'alarmVolume' | 'alarmRingDuration'>>) {
     const updated = await $fetch<ClientSettings>('/api/settings', {
       method: 'PATCH',
-      body: { alarmOffsetMinutes: minutes },
+      body,
     })
     settings.value = updated
   }
 
+  async function setOffset(minutes: number) {
+    await patch({ alarmOffsetMinutes: minutes })
+  }
+
+  async function setAlarmSound(sound: AlarmSound) {
+    await patch({ alarmSound: sound })
+  }
+
+  async function setAlarmVolume(volume: number) {
+    await patch({ alarmVolume: volume })
+  }
+
+  async function setAlarmRingDuration(minutes: number) {
+    await patch({ alarmRingDuration: minutes })
+  }
+
   onMounted(load)
 
-  return { settings, loading, setOffset, reload: load }
+  return { settings, loading, setOffset, setAlarmSound, setAlarmVolume, setAlarmRingDuration, reload: load }
 }
