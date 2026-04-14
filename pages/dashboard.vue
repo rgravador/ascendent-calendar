@@ -3,15 +3,19 @@ import { computed } from 'vue'
 
 const now = useNow()
 const schedule = useSchedule()
-const { settings, setOffset } = useSettings()
-const { ignoredIds, toggle: toggleIgnore } = useIgnoredEvents()
+const { settings, setOffset, setAlarmSound, setAlarmVolume, setAlarmRingDuration } = useSettings()
 
 const offsetRef = computed(() => settings.value.alarmOffsetMinutes)
+const soundRef = computed(() => settings.value.alarmSound)
+const volumeRef = computed(() => settings.value.alarmVolume)
+const ringDurationRef = computed(() => settings.value.alarmRingDuration)
 
 const alarms = useAlarms({
   events: schedule.events,
   offsetMinutes: offsetRef,
-  ignoredIds,
+  alarmSound: soundRef,
+  alarmVolume: volumeRef,
+  alarmRingDuration: ringDurationRef,
 })
 
 const dateLine = computed(() =>
@@ -46,6 +50,18 @@ async function onOffsetUpdate(minutes: number) {
   await setOffset(minutes)
 }
 
+async function onSoundUpdate(sound: import('~/server/types/models').AlarmSound) {
+  await setAlarmSound(sound)
+}
+
+async function onVolumeUpdate(volume: number) {
+  await setAlarmVolume(volume)
+}
+
+async function onRingDurationUpdate(minutes: number) {
+  await setAlarmRingDuration(minutes)
+}
+
 async function logout() {
   await $fetch('/api/session/logout', { method: 'POST' })
   await navigateTo('/')
@@ -68,7 +84,14 @@ async function logout() {
         <div class="flex items-center gap-2">
           <SettingsPopover
             :offset-minutes="settings.alarmOffsetMinutes"
-            @update="onOffsetUpdate"
+            :alarm-sound="settings.alarmSound"
+            :alarm-volume="settings.alarmVolume"
+            :alarm-ring-duration="settings.alarmRingDuration"
+            @update:offset="onOffsetUpdate"
+            @update:sound="onSoundUpdate"
+            @update:volume="onVolumeUpdate"
+            @update:ring-duration="onRingDurationUpdate"
+            @preview="alarms.previewSound"
           />
           <button class="btn btn-ghost text-xs" @click="logout">
             Sign out
@@ -118,6 +141,26 @@ async function logout() {
         @request-permission="alarms.requestPermission"
         @unlock-sound="alarms.unlockSound"
       />
+
+      <!-- Active alarm banner -->
+      <div
+        v-if="alarms.ringing.value"
+        class="mt-3 card border-bear/40 bg-bear/5 p-4 flex items-center justify-between gap-4 animate-pulse"
+      >
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="w-3 h-3 rounded-full bg-bear shrink-0" />
+          <div class="min-w-0">
+            <div class="kicker text-bear">ALARM RINGING</div>
+            <div class="text-sm text-ink truncate mt-0.5">{{ alarms.ringing.value.eventTitle }}</div>
+          </div>
+        </div>
+        <button
+          class="btn btn-accent text-xs shrink-0"
+          @click="alarms.dismiss"
+        >
+          Dismiss
+        </button>
+      </div>
     </div>
 
     <!-- Three-column terminal grid -->

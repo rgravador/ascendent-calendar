@@ -1,5 +1,6 @@
 import { ref, watch, onBeforeUnmount, type Ref } from 'vue'
 import type { CalendarEventDTO } from '~/server/services/calendar'
+import type { AlarmSound } from '~/server/types/models'
 
 const MS_PER_MINUTE = 60_000
 const GRACE_WINDOW_MS = 2 * MS_PER_MINUTE // fire late alarms if we missed them by < 2 min
@@ -17,49 +18,168 @@ function firedStorageKey(dateKey: string, eventId: string): string {
 
 export type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported'
 
+export interface RingingAlarm {
+  eventId: string
+  eventTitle: string
+}
+
 export interface AlarmsApi {
   permission: Ref<PermissionState>
   soundUnlocked: Ref<boolean>
+  ringing: Ref<RingingAlarm | null>
+  dismiss: () => void
   requestPermission: () => Promise<void>
   unlockSound: () => Promise<void>
   testFire: () => void
+  previewSound: (sound: AlarmSound) => void
 }
 
 interface Options {
   events: Ref<CalendarEventDTO[]>
   offsetMinutes: Ref<number>
-  ignoredIds: Ref<Set<string>>
-  soundSrc?: string
+  alarmSound: Ref<AlarmSound>
+  alarmVolume: Ref<number> // 0–100
+  alarmRingDuration: Ref<number> // minutes (1–10)
 }
 
-export function useAlarms({ events, offsetMinutes, ignoredIds, soundSrc = '/sounds/chime.mp3' }: Options): AlarmsApi {
+function playSynthSound(ctx: AudioContext, sound: AlarmSound, volume: number) {
+  const gain01 = Math.max(0, Math.min(1, volume / 100))
+  const now = ctx.currentTime
+
+  switch (sound) {
+    case 'chime': {
+      const frequencies = [880, 1318.51]
+      frequencies.forEach((freq, i) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.value = freq
+        const start = now + i * 0.18
+        const end = start + 0.35
+        gain.gain.setValueAtTime(0, start)
+        gain.gain.linearRampToValueAtTime(0.22 * gain01, start + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, end)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(start)
+        osc.stop(end + 0.05)
+      })
+      break
+    }
+    case 'bell': {
+      const harmonics = [
+        { freq: 523.25, amp: 1.0, decay: 1.2 },
+        { freq: 1046.5, amp: 0.6, decay: 0.8 },
+        { freq: 1569.75, amp: 0.3, decay: 0.5 },
+      ]
+      harmonics.forEach(({ freq, amp, decay }) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'sine'
+        osc.frequency.value = freq
+        const peak = amp * 0.3 * gain01
+        gain.gain.setValueAtTime(peak, now)
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + decay)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(now)
+        osc.stop(now + decay + 0.05)
+      })
+      break
+    }
+    case 'pulse': {
+      for (let i = 0; i < 2; i++) {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'square'
+        osc.frequency.value = 1000
+        const start = now + i * 0.2
+        const end = start + 0.1
+        gain.gain.setValueAtTime(0.15 * gain01, start)
+        gain.gain.setValueAtTime(0, end)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(start)
+        osc.stop(end + 0.01)
+      }
+      break
+    }
+    case 'marimba': {
+      const notes = [659.25, 783.99, 659.25]
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.type = 'triangle'
+        osc.frequency.value = freq
+        const start = now + i * 0.15
+        const peak = 0.28 * gain01
+        gain.gain.setValueAtTime(0, start)
+        gain.gain.linearRampToValueAtTime(peak, start + 0.005)
+        gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.45)
+        osc.connect(gain).connect(ctx.destination)
+        osc.start(start)
+        osc.stop(start + 0.5)
+      })
+      break
+    }
+  }
+}
+
+const RING_INTERVAL_MS = 3_000 // replay sound every 3 seconds
+
+export function useAlarms({ events, offsetMinutes, alarmSound, alarmVolume, alarmRingDuration }: Options): AlarmsApi {
   const permission = ref<PermissionState>('default')
   const soundUnlocked = ref(false)
+  const ringing = ref<RingingAlarm | null>(null)
   const timers = new Set<ReturnType<typeof setTimeout>>()
-  let audio: HTMLAudioElement | null = null
   let audioCtx: AudioContext | null = null
-  let audioFileMissing = false
+  let ringInterval: ReturnType<typeof setInterval> | null = null
+  let ringTimeout: ReturnType<typeof setTimeout> | null = null
 
-  function playSynthChime() {
-    if (!audioCtx) return
-    const ctx = audioCtx
-    const now = ctx.currentTime
-    // Two soft tones: perfect fifth, short.
-    const frequencies = [880, 1318.51]
-    frequencies.forEach((freq, i) => {
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      osc.type = 'sine'
-      osc.frequency.value = freq
-      const start = now + i * 0.18
-      const end = start + 0.35
-      gain.gain.setValueAtTime(0, start)
-      gain.gain.linearRampToValueAtTime(0.22, start + 0.02)
-      gain.gain.exponentialRampToValueAtTime(0.0001, end)
-      osc.connect(gain).connect(ctx.destination)
-      osc.start(start)
-      osc.stop(end + 0.05)
-    })
+  function ensureAudioCtx(): AudioContext | null {
+    if (typeof window === 'undefined') return null
+    try {
+      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      if (Ctx && !audioCtx) audioCtx = new Ctx()
+    } catch {
+      // ignore
+    }
+    return audioCtx
+  }
+
+  function playSound() {
+    const ctx = ensureAudioCtx()
+    if (!ctx) return
+    if (ctx.state === 'suspended') void ctx.resume()
+    playSynthSound(ctx, alarmSound.value, alarmVolume.value)
+  }
+
+  function stopRinging() {
+    if (ringInterval) {
+      clearInterval(ringInterval)
+      ringInterval = null
+    }
+    if (ringTimeout) {
+      clearTimeout(ringTimeout)
+      ringTimeout = null
+    }
+    ringing.value = null
+  }
+
+  function dismiss() {
+    stopRinging()
+  }
+
+  function startRinging(event: CalendarEventDTO) {
+    // If already ringing for another event, stop the previous one first
+    stopRinging()
+
+    ringing.value = { eventId: event.id, eventTitle: event.title }
+
+    // Play immediately, then repeat every RING_INTERVAL_MS
+    playSound()
+    ringInterval = setInterval(() => playSound(), RING_INTERVAL_MS)
+
+    // Auto-stop after configured duration
+    const durationMs = Math.max(1, alarmRingDuration.value) * MS_PER_MINUTE
+    ringTimeout = setTimeout(() => stopRinging(), durationMs)
   }
 
   function clearAllTimers() {
@@ -94,25 +214,12 @@ export function useAlarms({ events, offsetMinutes, ignoredIds, soundSrc = '/soun
         new Notification(event.title, { body, tag: event.id })
       } catch {
         // Some browsers throw when Notification is used outside a user gesture
-        // in certain contexts. Silent failure is fine — the chime still plays.
+        // in certain contexts. Silent failure is fine — the sound still plays.
       }
     }
 
-    // Chime — try file first, fall back to synthesised tone
     if (!soundUnlocked.value) return
-    if (audio && !audioFileMissing) {
-      try {
-        audio.currentTime = 0
-        void audio.play().catch(() => {
-          audioFileMissing = true
-          playSynthChime()
-        })
-        return
-      } catch {
-        audioFileMissing = true
-      }
-    }
-    playSynthChime()
+    startRinging(event)
   }
 
   function rebuild() {
@@ -135,10 +242,8 @@ export function useAlarms({ events, offsetMinutes, ignoredIds, soundSrc = '/soun
         const t = setTimeout(() => fire(ev), delay)
         timers.add(t)
       } else if (delay >= -GRACE_WINDOW_MS) {
-        // Missed it recently — fire immediately, once.
         fire(ev)
       }
-      // else: too far in the past, skip
     }
   }
 
@@ -162,36 +267,26 @@ export function useAlarms({ events, offsetMinutes, ignoredIds, soundSrc = '/soun
   async function unlockSound() {
     if (typeof window === 'undefined') return
 
-    // Prime an AudioContext so the synth fallback works under autoplay rules.
     try {
-      const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-      if (Ctx && !audioCtx) audioCtx = new Ctx()
-      if (audioCtx && audioCtx.state === 'suspended') await audioCtx.resume()
+      const ctx = ensureAudioCtx()
+      if (ctx && ctx.state === 'suspended') await ctx.resume()
     } catch {
       // ignore
     }
 
-    if (!audio) {
-      audio = new Audio(soundSrc)
-      audio.preload = 'auto'
-      audio.volume = 0.7
-    }
-    try {
-      audio.muted = true
-      await audio.play()
-      audio.pause()
-      audio.currentTime = 0
-      audio.muted = false
-    } catch {
-      // File unavailable — that's fine, synth fallback will handle it.
-      audioFileMissing = true
-    }
-    soundUnlocked.value = Boolean(audioCtx) || !audioFileMissing
+    soundUnlocked.value = Boolean(audioCtx)
   }
 
   function testFire() {
     if (events.value.length === 0) return
     fire(events.value[0]!)
+  }
+
+  function previewSound(sound: AlarmSound) {
+    const ctx = ensureAudioCtx()
+    if (!ctx) return
+    if (ctx.state === 'suspended') void ctx.resume()
+    playSynthSound(ctx, sound, alarmVolume.value)
   }
 
   // Initial permission probe
@@ -211,7 +306,8 @@ export function useAlarms({ events, offsetMinutes, ignoredIds, soundSrc = '/soun
 
   onBeforeUnmount(() => {
     clearAllTimers()
+    stopRinging()
   })
 
-  return { permission, soundUnlocked, requestPermission, unlockSound, testFire }
+  return { permission, soundUnlocked, ringing, dismiss, requestPermission, unlockSound, testFire, previewSound }
 }
