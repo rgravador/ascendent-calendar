@@ -13,7 +13,8 @@ function loadIgnoredIds(): Set<string> {
 }
 
 const now = useNow()
-const schedule = useSchedule()
+const selectedDate = ref(new Date())
+const schedule = useSchedule(selectedDate)
 const { settings, setOffset, setAlarmSound, setAlarmVolume, setAlarmRingDuration } = useSettings()
 
 const offsetRef = computed(() => settings.value.alarmOffsetMinutes)
@@ -201,7 +202,10 @@ async function logout() {
           :error="schedule.error.value"
           :now="now"
           :ignored-ids="ignoredIds"
+          :selected-date="selectedDate"
+          :is-today="schedule.isToday.value"
           @toggle-ignore="toggleIgnore"
+          @update:selected-date="selectedDate = $event"
         />
       </div>
       <div class="card p-5 min-w-0">

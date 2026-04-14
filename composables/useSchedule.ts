@@ -1,4 +1,4 @@
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, type Ref } from 'vue'
 import type { CalendarEventDTO } from '~/server/services/calendar'
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000
@@ -8,15 +8,37 @@ export type ScheduleError =
   | { kind: 'auth_failed' }
   | { kind: 'unknown'; message: string }
 
-export function useSchedule() {
+function toDateString(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate()
+}
+
+export function useSchedule(selectedDate?: Ref<Date>) {
   const events = ref<CalendarEventDTO[]>([])
   const loading = ref(true)
   const error = ref<ScheduleError | null>(null)
   let timer: ReturnType<typeof setInterval> | null = null
 
+  const isToday = computed(() => {
+    if (!selectedDate) return true
+    return isSameDay(selectedDate.value, new Date())
+  })
+
   async function refresh() {
     try {
-      const res = await $fetch<{ events: CalendarEventDTO[] }>('/api/calendar/today')
+      const query: Record<string, string> = {}
+      if (selectedDate && !isSameDay(selectedDate.value, new Date())) {
+        query.date = toDateString(selectedDate.value)
+      }
+      const res = await $fetch<{ events: CalendarEventDTO[] }>('/api/calendar/today', { query })
       events.value = res.events
       error.value = null
     } catch (e: unknown) {
@@ -35,6 +57,13 @@ export function useSchedule() {
     }
   }
 
+  if (selectedDate) {
+    watch(selectedDate, () => {
+      loading.value = true
+      refresh()
+    })
+  }
+
   onMounted(() => {
     refresh()
     timer = setInterval(refresh, POLL_INTERVAL_MS)
@@ -51,5 +80,5 @@ export function useSchedule() {
     }
   })
 
-  return { events, loading, error, refresh }
+  return { events, loading, error, refresh, isToday }
 }

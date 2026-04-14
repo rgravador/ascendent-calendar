@@ -39,13 +39,13 @@ function endOfLocalDay(now: Date = new Date()): Date {
   return d
 }
 
-export async function fetchTodaysEvents(refreshToken: string): Promise<CalendarEventDTO[]> {
+export async function fetchDayEvents(refreshToken: string, date?: Date): Promise<CalendarEventDTO[]> {
   if (isMockMode()) return mockTodaysEvents()
 
   const auth = buildAuthenticatedClient(refreshToken)
   const calendar = google.calendar({ version: 'v3', auth })
 
-  const now = new Date()
+  const now = date ?? new Date()
   try {
     const res = await calendar.events.list({
       calendarId: 'primary',

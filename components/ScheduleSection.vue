@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import type { CalendarEventDTO } from '~/server/services/calendar'
 import type { ScheduleError } from '~/composables/useSchedule'
 
@@ -9,13 +9,43 @@ const props = defineProps<{
   error: ScheduleError | null
   now: Date
   ignoredIds: Set<string>
+  selectedDate: Date
+  isToday: boolean
 }>()
 
 const emit = defineEmits<{
   toggleIgnore: [eventId: string]
+  'update:selectedDate': [date: Date]
 }>()
 
 const hasEvents = computed(() => props.events.length > 0)
+
+const dateInputValue = computed(() => {
+  const d = props.selectedDate
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+})
+
+function onDateInput(e: Event) {
+  const value = (e.target as HTMLInputElement).value
+  if (!value) return
+  const [y, m, d] = value.split('-').map(Number)
+  emit('update:selectedDate', new Date(y, m - 1, d))
+}
+
+function goToToday() {
+  emit('update:selectedDate', new Date())
+}
+
+const noEventsMessage = computed(() =>
+  props.isToday ? 'No events today' : 'No events on this day',
+)
+
+const noEventsSubtext = computed(() =>
+  props.isToday ? 'Your schedule is clear.' : 'Nothing scheduled.',
+)
 </script>
 
 <template>
@@ -28,6 +58,25 @@ const hasEvents = computed(() => props.events.length > 0)
       <span v-if="events.length > 0" class="tag tag-info num">
         {{ String(events.length).padStart(2, '0') }}
       </span>
+    </div>
+
+    <!-- Date selector -->
+    <div class="flex items-center gap-2 mb-4">
+      <div class="date-picker-wrap">
+        <input
+          type="date"
+          :value="dateInputValue"
+          class="date-picker field num text-xs"
+          @input="onDateInput"
+        />
+      </div>
+      <button
+        v-if="!isToday"
+        class="tag tag-accent cursor-pointer hover:brightness-125 transition-all"
+        @click="goToToday"
+      >
+        ↩ Today
+      </button>
     </div>
 
     <div v-if="error?.kind === 'not_connected'" class="rounded-md bg-surface-soft border border-rule p-4 text-center">
@@ -48,8 +97,8 @@ const hasEvents = computed(() => props.events.length > 0)
     <div v-else-if="loading" class="text-mute text-xs font-mono py-4">Loading…</div>
 
     <div v-else-if="!hasEvents" class="rounded-md bg-surface-soft border border-rule p-6 text-center">
-      <p class="text-sm text-ink">No events today</p>
-      <p class="text-xs text-mute mt-1">Your schedule is clear.</p>
+      <p class="text-sm text-ink">{{ noEventsMessage }}</p>
+      <p class="text-xs text-mute mt-1">{{ noEventsSubtext }}</p>
     </div>
 
     <ol v-else class="divide-y divide-rule">
@@ -64,3 +113,29 @@ const hasEvents = computed(() => props.events.length > 0)
     </ol>
   </div>
 </template>
+
+<style scoped>
+.date-picker-wrap {
+  position: relative;
+}
+
+.date-picker {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color-scheme: dark;
+}
+
+.date-picker::-webkit-calendar-picker-indicator {
+  filter: invert(0.6) sepia(1) saturate(3) hue-rotate(110deg);
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 160ms ease;
+}
+
+.date-picker:hover::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+</style>
