@@ -12,8 +12,8 @@ function todayKey(date: Date = new Date()): string {
   return `${y}-${m}-${d}`
 }
 
-function firedStorageKey(dateKey: string, eventId: string): string {
-  return `fired:${dateKey}:${eventId}`
+function firedStorageKey(dateKey: string, eventId: string, startMs: number): string {
+  return `fired:${dateKey}:${eventId}:${startMs}`
 }
 
 export type PermissionState = 'default' | 'granted' | 'denied' | 'unsupported'
@@ -420,20 +420,21 @@ export function useAlarms({ events, offsetMinutes, ignoredIds, alarmSound, alarm
     timers.clear()
   }
 
-  function hasFired(dateKey: string, eventId: string): boolean {
+  function hasFired(dateKey: string, eventId: string, startMs: number): boolean {
     if (typeof localStorage === 'undefined') return false
-    return localStorage.getItem(firedStorageKey(dateKey, eventId)) === '1'
+    return localStorage.getItem(firedStorageKey(dateKey, eventId, startMs)) === '1'
   }
 
-  function markFired(dateKey: string, eventId: string) {
+  function markFired(dateKey: string, eventId: string, startMs: number) {
     if (typeof localStorage === 'undefined') return
-    localStorage.setItem(firedStorageKey(dateKey, eventId), '1')
+    localStorage.setItem(firedStorageKey(dateKey, eventId, startMs), '1')
   }
 
   function fire(event: CalendarEventDTO) {
+    const startMs = new Date(event.start).getTime()
     const dateKey = todayKey(new Date(event.start))
-    if (hasFired(dateKey, event.id)) return
-    markFired(dateKey, event.id)
+    if (hasFired(dateKey, event.id, startMs)) return
+    markFired(dateKey, event.id, startMs)
 
     // Desktop notification
     if (permission.value === 'granted' && typeof Notification !== 'undefined') {
@@ -469,7 +470,7 @@ export function useAlarms({ events, offsetMinutes, ignoredIds, alarmSound, alarm
       const fireAt = startMs - offsetMs
       const delay = fireAt - now
       const dateKey = todayKey(new Date(ev.start))
-      if (hasFired(dateKey, ev.id)) continue
+      if (hasFired(dateKey, ev.id, startMs)) continue
 
       if (delay > 0) {
         const t = setTimeout(() => fire(ev), delay)
