@@ -28,10 +28,11 @@ export interface AlarmsApi {
 interface Options {
   events: Ref<CalendarEventDTO[]>
   offsetMinutes: Ref<number>
+  ignoredIds: Ref<Set<string>>
   soundSrc?: string
 }
 
-export function useAlarms({ events, offsetMinutes, soundSrc = '/sounds/chime.mp3' }: Options): AlarmsApi {
+export function useAlarms({ events, offsetMinutes, ignoredIds, soundSrc = '/sounds/chime.mp3' }: Options): AlarmsApi {
   const permission = ref<PermissionState>('default')
   const soundUnlocked = ref(false)
   const timers = new Set<ReturnType<typeof setTimeout>>()
@@ -123,6 +124,7 @@ export function useAlarms({ events, offsetMinutes, soundSrc = '/sounds/chime.mp3
 
     for (const ev of events.value) {
       if (!ev.id) continue
+      if (ignoredIds.value.has(ev.id)) continue
       const startMs = new Date(ev.start).getTime()
       const fireAt = startMs - offsetMs
       const delay = fireAt - now
@@ -200,7 +202,7 @@ export function useAlarms({ events, offsetMinutes, soundSrc = '/sounds/chime.mp3
   }
 
   watch(
-    [events, offsetMinutes],
+    [events, offsetMinutes, ignoredIds],
     () => {
       rebuild()
     },
