@@ -32,21 +32,22 @@ function assertValidTitle(title: string) {
   }
 }
 
-export async function listNotes(): Promise<Note[]> {
+export async function listNotes(userId: string): Promise<Note[]> {
   if (isMockMode()) {
-    return [...mockNotes.list()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    return [...mockNotes.list(userId)].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
   }
   const db = await getDb()
-  const docs = await db.collection<Note>(COLLECTION).find({}).toArray()
+  const docs = await db.collection<Note>(COLLECTION).find({ userId }).toArray()
   return [...docs].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
 }
 
-export async function createNote(input: CreateNoteInput): Promise<Note> {
+export async function createNote(userId: string, input: CreateNoteInput): Promise<Note> {
   assertValidBody(input.body)
   if (input.title) assertValidTitle(input.title)
   const now = new Date().toISOString()
   const note: Note = {
     _id: randomUUID(),
+    userId,
     ...(input.title ? { title: input.title } : {}),
     body: input.body.trim(),
     createdAt: now,
@@ -58,7 +59,7 @@ export async function createNote(input: CreateNoteInput): Promise<Note> {
   return note
 }
 
-export async function updateNote(id: string, patch: UpdateNoteInput): Promise<Note | null> {
+export async function updateNote(userId: string, id: string, patch: UpdateNoteInput): Promise<Note | null> {
   const safePatch: Partial<Note> = {}
   let unsetTitle = false
 
@@ -76,22 +77,22 @@ export async function updateNote(id: string, patch: UpdateNoteInput): Promise<No
   }
   safePatch.updatedAt = new Date().toISOString()
 
-  if (isMockMode()) return mockNotes.update(id, safePatch, unsetTitle)
+  if (isMockMode()) return mockNotes.update(userId, id, safePatch, unsetTitle)
 
   const db = await getDb()
   const update: Record<string, unknown> = { $set: safePatch }
   if (unsetTitle) update.$unset = { title: '' }
   const result = await db.collection<Note>(COLLECTION).findOneAndUpdate(
-    { _id: id },
+    { _id: id, userId },
     update,
     { returnDocument: 'after' },
   )
   return result ?? null
 }
 
-export async function deleteNote(id: string): Promise<boolean> {
-  if (isMockMode()) return mockNotes.remove(id)
+export async function deleteNote(userId: string, id: string): Promise<boolean> {
+  if (isMockMode()) return mockNotes.remove(userId, id)
   const db = await getDb()
-  const result = await db.collection<Note>(COLLECTION).deleteOne({ _id: id })
+  const result = await db.collection<Note>(COLLECTION).deleteOne({ _id: id, userId })
   return result.deletedCount === 1
 }

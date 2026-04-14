@@ -44,17 +44,16 @@ export const ALARM_SOUNDS: readonly AlarmSound[] = [
 ] as const
 
 export interface Settings {
-  _id: 'singleton'
+  _id: string // userId (Google sub)
   alarmOffsetMinutes: number
   alarmSound: AlarmSound
   alarmVolume: number // 0–100
   alarmRingDuration: number // minutes (1–10)
-  googleRefreshToken?: string
-  googleTokenUpdatedAt?: string
 }
 
 export interface Todo {
   _id: string
+  userId: string
   text: string
   priority: Priority
   dueDate?: string // ISO date (YYYY-MM-DD) or full ISO
@@ -65,16 +64,19 @@ export interface Todo {
 
 export interface Note {
   _id: string
+  userId: string
   title?: string
   body: string
   createdAt: string
   updatedAt: string
 }
 
-export const DEFAULT_SETTINGS: Settings = {
-  _id: 'singleton',
-  alarmOffsetMinutes: 5,
-  alarmSound: 'bells',
-  alarmVolume: 70,
-  alarmRingDuration: 2,
+export function defaultSettings(userId: string): Settings {
+  return {
+    _id: userId,
+    alarmOffsetMinutes: 5,
+    alarmSound: 'bells',
+    alarmVolume: 70,
+    alarmRingDuration: 2,
+  }
 }

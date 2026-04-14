@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { ALARM_SOUNDS, type Note, type Settings, type Todo } from '~/server/types/models'
+import { ALARM_SOUNDS, defaultSettings, type Note, type Settings, type Todo } from '~/server/types/models'
 import type { CalendarEventDTO } from '~/server/services/calendar'
 
 /**
@@ -24,47 +24,41 @@ function todayAt(hour: number, minute: number = 0): Date {
 
 // --- settings ---
 
-const settingsState: Settings = {
-  _id: 'singleton',
-  alarmOffsetMinutes: 5,
-  alarmSound: 'bells',
-  alarmVolume: 70,
-  alarmRingDuration: 2,
-  googleRefreshToken: 'mock-refresh-token',
-  googleTokenUpdatedAt: now(),
-}
+const settingsStore = new Map<string, Settings>()
 
 export const mockSettings = {
-  get(): Settings {
-    return { ...settingsState }
+  get(userId: string): Settings {
+    const existing = settingsStore.get(userId)
+    if (existing) return { ...existing }
+    return { ...defaultSettings(userId) }
   },
-  patch(patch: Partial<Omit<Settings, '_id'>>): Settings {
+  patch(userId: string, patch: Partial<Omit<Settings, '_id'>>): Settings {
+    const state = settingsStore.get(userId) ?? { ...defaultSettings(userId) }
     if (typeof patch.alarmOffsetMinutes === 'number' && Number.isFinite(patch.alarmOffsetMinutes)) {
-      settingsState.alarmOffsetMinutes = Math.max(0, Math.floor(patch.alarmOffsetMinutes))
+      state.alarmOffsetMinutes = Math.max(0, Math.floor(patch.alarmOffsetMinutes))
     }
     if (typeof patch.alarmSound === 'string' && ALARM_SOUNDS.includes(patch.alarmSound)) {
-      settingsState.alarmSound = patch.alarmSound
+      state.alarmSound = patch.alarmSound
     }
     if (typeof patch.alarmVolume === 'number' && Number.isFinite(patch.alarmVolume)) {
-      settingsState.alarmVolume = Math.max(0, Math.min(100, Math.round(patch.alarmVolume)))
+      state.alarmVolume = Math.max(0, Math.min(100, Math.round(patch.alarmVolume)))
     }
     if (typeof patch.alarmRingDuration === 'number' && Number.isFinite(patch.alarmRingDuration)) {
-      settingsState.alarmRingDuration = Math.max(1, Math.min(10, Math.round(patch.alarmRingDuration)))
+      state.alarmRingDuration = Math.max(1, Math.min(10, Math.round(patch.alarmRingDuration)))
     }
-    if (typeof patch.googleRefreshToken === 'string') {
-      settingsState.googleRefreshToken = patch.googleRefreshToken
-      settingsState.googleTokenUpdatedAt = now()
-    }
-    return { ...settingsState }
+    settingsStore.set(userId, state)
+    return { ...state }
   },
 }
 
 // --- todos ---
 
+const MOCK_USER_ID = 'mock-user'
+
 const todos: Map<string, Todo> = new Map()
 
 function seedTodos() {
-  const seed: Omit<Todo, '_id'>[] = [
+  const seed: Omit<Todo, '_id' | 'userId'>[] = [
     { text: 'Reply to Marcus about the Q2 proposal', priority: 'high', dueDate: iso(todayAt(17)), done: false, createdAt: now(), updatedAt: now() },
     { text: 'Draft the launch announcement', priority: 'med', done: false, createdAt: now(), updatedAt: now() },
     { text: 'Book flights for the conference', priority: 'low', dueDate: iso(new Date(Date.now() + 3 * 24 * 3600 * 1000)), done: false, createdAt: now(), updatedAt: now() },
@@ -72,28 +66,30 @@ function seedTodos() {
   ]
   for (const t of seed) {
     const id = randomUUID()
-    todos.set(id, { _id: id, ...t })
+    todos.set(id, { _id: id, userId: MOCK_USER_ID, ...t })
   }
 }
 seedTodos()
 
 export const mockTodos = {
-  list(): Todo[] {
-    return Array.from(todos.values())
+  list(userId: string): Todo[] {
+    return Array.from(todos.values()).filter((t) => t.userId === userId)
   },
   create(todo: Todo): Todo {
     todos.set(todo._id, todo)
     return todo
   },
-  update(id: string, patch: Partial<Todo>, unsetDueDate: boolean): Todo | null {
+  update(userId: string, id: string, patch: Partial<Todo>, unsetDueDate: boolean): Todo | null {
     const existing = todos.get(id)
-    if (!existing) return null
+    if (!existing || existing.userId !== userId) return null
     const next: Todo = { ...existing, ...patch, updatedAt: now() }
     if (unsetDueDate) delete next.dueDate
     todos.set(id, next)
     return next
   },
-  remove(id: string): boolean {
+  remove(userId: string, id: string): boolean {
+    const existing = todos.get(id)
+    if (!existing || existing.userId !== userId) return false
     return todos.delete(id)
   },
 }
@@ -103,7 +99,7 @@ export const mockTodos = {
 const notes: Map<string, Note> = new Map()
 
 function seedNotes() {
-  const seed: Omit<Note, '_id'>[] = [
+  const seed: Omit<Note, '_id' | 'userId'>[] = [
     {
       title: 'On routine',
       body: 'A day goes well when the first hour is uncluttered. Protect the first hour.',
@@ -124,28 +120,30 @@ function seedNotes() {
   ]
   for (const n of seed) {
     const id = randomUUID()
-    notes.set(id, { _id: id, ...n })
+    notes.set(id, { _id: id, userId: MOCK_USER_ID, ...n })
   }
 }
 seedNotes()
 
 export const mockNotes = {
-  list(): Note[] {
-    return Array.from(notes.values())
+  list(userId: string): Note[] {
+    return Array.from(notes.values()).filter((n) => n.userId === userId)
   },
   create(note: Note): Note {
     notes.set(note._id, note)
     return note
   },
-  update(id: string, patch: Partial<Note>, unsetTitle: boolean): Note | null {
+  update(userId: string, id: string, patch: Partial<Note>, unsetTitle: boolean): Note | null {
     const existing = notes.get(id)
-    if (!existing) return null
+    if (!existing || existing.userId !== userId) return null
     const next: Note = { ...existing, ...patch, updatedAt: now() }
     if (unsetTitle) delete next.title
     notes.set(id, next)
     return next
   },
-  remove(id: string): boolean {
+  remove(userId: string, id: string): boolean {
+    const existing = notes.get(id)
+    if (!existing || existing.userId !== userId) return false
     return notes.delete(id)
   },
 }

@@ -17,6 +17,7 @@ interface PatchBody {
 }
 
 export default defineEventHandler(async (event) => {
+  const userId = event.context.userId as string
   const body = await readBody<PatchBody>(event).catch(() => ({}))
   const patch: Partial<{ alarmOffsetMinutes: number; alarmSound: AlarmSound; alarmVolume: number; alarmRingDuration: number }> = {}
 
@@ -64,12 +65,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'No valid fields to update' })
   }
 
-  const updated = await updateSettings(patch)
+  const updated = await updateSettings(userId, patch)
   return {
     alarmOffsetMinutes: updated.alarmOffsetMinutes,
     alarmSound: updated.alarmSound,
     alarmVolume: updated.alarmVolume,
     alarmRingDuration: updated.alarmRingDuration,
-    calendarConnected: Boolean(updated.googleRefreshToken),
   }
 })

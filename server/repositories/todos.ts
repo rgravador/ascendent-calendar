@@ -41,20 +41,21 @@ function assertValidDueDate(value: string) {
   if (Number.isNaN(d.getTime())) throw new Error(`Invalid dueDate: ${value}`)
 }
 
-export async function listTodos(): Promise<Todo[]> {
-  if (isMockMode()) return [...mockTodos.list()].sort(compareTodos)
+export async function listTodos(userId: string): Promise<Todo[]> {
+  if (isMockMode()) return [...mockTodos.list(userId)].sort(compareTodos)
   const db = await getDb()
-  const docs = await db.collection<Todo>(COLLECTION).find({}).toArray()
+  const docs = await db.collection<Todo>(COLLECTION).find({ userId }).toArray()
   return [...docs].sort(compareTodos)
 }
 
-export async function createTodo(input: CreateTodoInput): Promise<Todo> {
+export async function createTodo(userId: string, input: CreateTodoInput): Promise<Todo> {
   assertValidText(input.text)
   assertValidPriority(input.priority)
   if (input.dueDate) assertValidDueDate(input.dueDate)
   const now = new Date().toISOString()
   const todo: Todo = {
     _id: randomUUID(),
+    userId,
     text: input.text.trim(),
     priority: input.priority,
     ...(input.dueDate ? { dueDate: input.dueDate } : {}),
@@ -68,7 +69,7 @@ export async function createTodo(input: CreateTodoInput): Promise<Todo> {
   return todo
 }
 
-export async function updateTodo(id: string, patch: UpdateTodoInput): Promise<Todo | null> {
+export async function updateTodo(userId: string, id: string, patch: UpdateTodoInput): Promise<Todo | null> {
   const safePatch: Partial<Todo> = {}
   let unsetDueDate = false
 
@@ -91,23 +92,23 @@ export async function updateTodo(id: string, patch: UpdateTodoInput): Promise<To
   }
   safePatch.updatedAt = new Date().toISOString()
 
-  if (isMockMode()) return mockTodos.update(id, safePatch, unsetDueDate)
+  if (isMockMode()) return mockTodos.update(userId, id, safePatch, unsetDueDate)
 
   const db = await getDb()
   const update: Record<string, unknown> = { $set: safePatch }
   if (unsetDueDate) update.$unset = { dueDate: '' }
   const result = await db.collection<Todo>(COLLECTION).findOneAndUpdate(
-    { _id: id },
+    { _id: id, userId },
     update,
     { returnDocument: 'after' },
   )
   return result ?? null
 }
 
-export async function deleteTodo(id: string): Promise<boolean> {
-  if (isMockMode()) return mockTodos.remove(id)
+export async function deleteTodo(userId: string, id: string): Promise<boolean> {
+  if (isMockMode()) return mockTodos.remove(userId, id)
   const db = await getDb()
-  const result = await db.collection<Todo>(COLLECTION).deleteOne({ _id: id })
+  const result = await db.collection<Todo>(COLLECTION).deleteOne({ _id: id, userId })
   return result.deletedCount === 1
 }
 

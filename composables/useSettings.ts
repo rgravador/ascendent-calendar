@@ -26,11 +26,11 @@ export function useSettings() {
   }
 
   async function patch(body: Partial<Pick<ClientSettings, 'alarmOffsetMinutes' | 'alarmSound' | 'alarmVolume' | 'alarmRingDuration'>>) {
-    const updated = await $fetch<ClientSettings>('/api/settings', {
+    const updated = await $fetch<Partial<ClientSettings>>('/api/settings', {
       method: 'PATCH',
       body,
     })
-    settings.value = updated
+    settings.value = { ...settings.value, ...updated }
   }
 
   async function setOffset(minutes: number) {
