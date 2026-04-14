@@ -9,7 +9,7 @@ interface ClientSettings {
   calendarConnected: boolean
 }
 
-const DEFAULTS: ClientSettings = { alarmOffsetMinutes: 5, alarmSound: 'chime', alarmVolume: 70, alarmRingDuration: 2, calendarConnected: false }
+const DEFAULTS: ClientSettings = { alarmOffsetMinutes: 5, alarmSound: 'bells', alarmVolume: 70, alarmRingDuration: 2, calendarConnected: false }
 
 export function useSettings() {
   const settings = ref<ClientSettings>({ ...DEFAULTS })

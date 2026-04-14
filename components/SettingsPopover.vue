@@ -3,10 +3,27 @@ import { ref, watch } from 'vue'
 import { ALARM_SOUNDS, type AlarmSound } from '~/server/types/models'
 
 const SOUND_LABELS: Record<AlarmSound, string> = {
-  chime: 'Chime',
-  bell: 'Bell',
-  pulse: 'Pulse',
-  marimba: 'Marimba',
+  bells: 'Bells',
+  birds: 'Birds',
+  childhood: 'Childhood',
+  classic: 'Classic',
+  cuckoo: 'Cuckoo',
+  flute: 'Flute',
+  glow: 'Glow',
+  guitar: 'Guitar',
+  happy: 'Happy',
+  harp: 'Harp',
+  musicBox: 'Music Box',
+  paradiseIsland: 'Paradise Island',
+  piano: 'Piano',
+  pipe: 'Pipe',
+  pizzicato: 'Pizzicato',
+  rooster: 'Rooster',
+  savannah: 'Savannah',
+  school: 'School',
+  twinkle: 'Twinkle',
+  windChimes: 'Wind Chimes',
+  xylophone: 'Xylophone',
 }
 
 const props = defineProps<{

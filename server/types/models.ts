@@ -13,9 +13,35 @@ export interface User {
   updatedAt: string
 }
 
-export type AlarmSound = 'chime' | 'bell' | 'pulse' | 'marimba'
+export type AlarmSound =
+  | 'bells'
+  | 'birds'
+  | 'childhood'
+  | 'classic'
+  | 'cuckoo'
+  | 'flute'
+  | 'glow'
+  | 'guitar'
+  | 'happy'
+  | 'harp'
+  | 'musicBox'
+  | 'paradiseIsland'
+  | 'piano'
+  | 'pipe'
+  | 'pizzicato'
+  | 'rooster'
+  | 'savannah'
+  | 'school'
+  | 'twinkle'
+  | 'windChimes'
+  | 'xylophone'
 
-export const ALARM_SOUNDS: readonly AlarmSound[] = ['chime', 'bell', 'pulse', 'marimba'] as const
+export const ALARM_SOUNDS: readonly AlarmSound[] = [
+  'bells', 'birds', 'childhood', 'classic', 'cuckoo', 'flute', 'glow',
+  'guitar', 'happy', 'harp', 'musicBox', 'paradiseIsland', 'piano',
+  'pipe', 'pizzicato', 'rooster', 'savannah', 'school', 'twinkle',
+  'windChimes', 'xylophone',
+] as const
 
 export interface Settings {
   _id: 'singleton'
@@ -48,7 +74,7 @@ export interface Note {
 export const DEFAULT_SETTINGS: Settings = {
   _id: 'singleton',
   alarmOffsetMinutes: 5,
-  alarmSound: 'chime',
+  alarmSound: 'bells',
   alarmVolume: 70,
   alarmRingDuration: 2,
 }

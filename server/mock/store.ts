@@ -27,7 +27,7 @@ function todayAt(hour: number, minute: number = 0): Date {
 const settingsState: Settings = {
   _id: 'singleton',
   alarmOffsetMinutes: 5,
-  alarmSound: 'chime',
+  alarmSound: 'bells',
   alarmVolume: 70,
   alarmRingDuration: 2,
   googleRefreshToken: 'mock-refresh-token',
