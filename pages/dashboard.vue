@@ -83,6 +83,17 @@ const minsToNext = computed(() => {
   return Math.max(0, Math.round((new Date(nextEvent.value.start).getTime() - now.value.getTime()) / 60000))
 })
 
+const timeToNextFormatted = computed(() => {
+  if (minsToNext.value === null) return '--'
+  const mins = minsToNext.value
+  if (mins >= 60) {
+    const h = Math.floor(mins / 60)
+    const m = mins % 60
+    return m > 0 ? `${h}h ${m}m` : `${h}h`
+  }
+  return `${mins}m`
+})
+
 async function onOffsetUpdate(minutes: number) {
   await setOffset(minutes)
 }
@@ -159,7 +170,7 @@ async function logout() {
         <div class="card p-4">
           <div class="section-label">Next in</div>
           <div class="font-display text-2xl mt-1.5" :class="minsToNext !== null ? 'text-accent' : 'text-mute'">
-            {{ minsToNext !== null ? `${minsToNext}m` : '--' }}
+            {{ timeToNextFormatted }}
           </div>
           <div class="text-xs text-mute mt-1 truncate">
             {{ nextEvent?.title ?? 'No upcoming events' }}
